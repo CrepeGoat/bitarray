@@ -1,3 +1,5 @@
+pub mod bitarray;
+
 #[cfg(test)]
 mod tests {
     #[test]
