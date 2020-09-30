@@ -21,7 +21,8 @@ impl BitArray {
 	}
 
 	fn mask(&self) -> u64 {
-		(!0u64 >> (self.left_margin+self.right_margin)) << self.right_margin
+		(!0u64 >> self.left_margin) & (!0u64 << self.right_margin)
+	}
 	}
 
 	fn trim_to(self, new_len: u64) -> BitArray {
@@ -73,6 +74,17 @@ mod tests {
 
 		assert_eq!(u64::from(bitarray), 0xff0u64);
 	}
+
+	#[test]
+	fn mask() {
+		let bitarray = BitArray{
+			array: 0u64,
+			left_margin: 64-6,
+			right_margin: 3,
+			left_align: false,
+		};
+		assert_eq!(bitarray.mask(), 0b111000)
+	}	
 
 	#[test]
 	fn trim_to() {
