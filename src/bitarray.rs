@@ -9,6 +9,14 @@ struct BitArray {
 	left_align: bool,
 }
 
+impl PartialEq for BitArray {
+	fn eq(&self, other: &Self) -> bool {
+		self.left_align == other.left_align
+		&& u64::from(*self) == u64::from(*other)
+		&& self.length() == other.length()
+	}
+}
+
 impl From<BitArray> for u64 {
 	fn from(ba: BitArray) -> u64 {
 		(ba.array & (!0u64 >> ba.left_margin)) >> ba.right_margin
@@ -59,17 +67,17 @@ impl BitArray {
 		}
 	}
 
-	fn apply_binary<F>(func: F, bits1: BitArray, bits2: BitArray) -> BitArray
+	fn apply_binary<F>(&self, func: F, bits: Self) -> Self
 		where F: Fn(u64, u64) -> u64
 	{
-		let bits1 = bits1.trim_to(bits2.length());
-		let bits2 = bits2.trim_to(bits1.length());
+		let bits = bits.aligned_to(*self);
+		let self_ = self.trim_to(bits.length());
 
-		BitArray{
-			array: func(bits1.into(), bits2.into()),
-			left_margin: 64-bits1.length(),
-			right_margin: 0u64,
-			left_align: bits1.left_align || bits2.left_align,
+		Self {
+			array: func(self_.array, bits.array),
+			left_margin: u64::max(self_.left_margin, bits.left_margin),
+			right_margin: u64::max(self_.right_margin, bits.right_margin),
+			left_align: self_.left_align,
 		}
 	}
 
@@ -147,6 +155,29 @@ mod tests {
 		let b2_a = b2.aligned_to(b1);
 		assert_eq!(b2_a.array, 0b11111000000u64);
 		assert_eq!(b2_a.right_margin, b1.right_margin);
+	}
+
+	#[test]
+	fn apply_xor() {
+		let b1 = BitArray{
+			array: 0b0011,
+			left_margin: 64-4,
+			right_margin: 0,
+			left_align: false,
+		};
+		let b2 = BitArray{
+			array: 0b010100,
+			left_margin: 64-6,
+			right_margin: 2,
+			left_align: true,
+		};
+		
+		assert_eq!(b1.apply_binary(|x: u64, y: u64| x ^ y, b2), BitArray{
+			array: 0b0011 ^ (0b010100 >> 2),
+			left_margin: u64::max(b1.left_margin, b2.left_margin),
+			right_margin: b1.right_margin,
+			left_align: b1.left_align,	
+		});
 	}
 }
 
