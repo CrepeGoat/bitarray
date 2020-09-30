@@ -23,6 +23,23 @@ impl BitArray {
 	fn mask(&self) -> u64 {
 		(!0u64 >> self.left_margin) & (!0u64 << self.right_margin)
 	}
+
+	fn aligned_to(self, bits: Self) -> Self {
+		if bits.left_align {
+			Self {
+				array: (self.array << self.left_margin) >> bits.left_margin,
+				left_margin: bits.left_margin,
+				right_margin: 64-u64::max(self.length(), bits.length()),
+				left_align: self.left_align
+			}
+		} else {
+			Self {
+				array: (self.array >> self.right_margin) << bits.right_margin,
+				left_margin: 64-u64::max(self.length(), bits.length()),
+				right_margin: bits.right_margin,
+				left_align: self.left_align
+			}
+		}
 	}
 
 	fn trim_to(self, new_len: u64) -> BitArray {
@@ -106,6 +123,30 @@ mod tests {
 			}.trim_to(60)),
 			0x0ff000000000ff,
 		);
+	}
+
+	#[test]
+	fn aligned_to() {
+		let b1 = BitArray{
+			array: 0b1111000000,
+			left_margin: 64-10,
+			right_margin: 6,
+			left_align: false,
+		};
+		let b2 = BitArray{
+			array: 0b1111100,
+			left_margin: 64-7,
+			right_margin: 2,
+			left_align: true,
+		};
+
+		let b1_a = b1.aligned_to(b2);
+		assert_eq!(b1_a.array, 0b1111000u64);
+		assert_eq!(b1_a.left_margin, b2.left_margin);
+		
+		let b2_a = b2.aligned_to(b1);
+		assert_eq!(b2_a.array, 0b11111000000u64);
+		assert_eq!(b2_a.right_margin, b1.right_margin);
 	}
 }
 
