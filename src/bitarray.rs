@@ -62,18 +62,16 @@ impl BitArray {
 mod tests {
 	use super::*;
 
-	fn make_bit_array() -> BitArray {
-		BitArray{
+	#[test]
+	fn into_u64() {
+		let bitarray = BitArray{
 			array: 0x0000f0000000ff00,
 			left_margin: 24,
 			right_margin: 4,
 			left_align: false,
-		}
-	}
+		};
 
-	#[test]
-	fn into_u64() {
-		assert_eq!(u64::from(make_bit_array()), 0xff0u64);
+		assert_eq!(u64::from(bitarray), 0xff0u64);
 	}
 
 	#[test]
