@@ -29,10 +29,14 @@ impl BitArray {
 			return self;
 		}
 		
-		BitArray{
+		Self {
 			array: self.array,
-			left_margin: if self.left_align {self.left_margin} else {64-self.right_margin-new_len},
-			right_margin: if !self.left_align {self.right_margin} else {64-self.left_margin-new_len},
+			left_margin: 
+				if self.left_align {self.left_margin}
+				else {64-self.right_margin-new_len},
+			right_margin:
+				if !self.left_align {self.right_margin}
+				else {64-self.left_margin-new_len},
 			left_align: self.left_align,
 		}
 	}
@@ -70,6 +74,28 @@ mod tests {
 	#[test]
 	fn into_u64() {
 		assert_eq!(u64::from(make_bit_array()), 0xff0u64);
+	}
+
+	#[test]
+	fn trim_to() {
+		assert_eq!(
+			u64::from(BitArray{
+				array: 0x0ff000000000ff0,
+				left_margin: 0,
+				right_margin: 0,
+				left_align: false,
+			}.trim_to(60)),
+			0xff000000000ff0,
+		);
+		assert_eq!(
+			u64::from(BitArray{
+				array: 0x0ff000000000ff0,
+				left_margin: 0,
+				right_margin: 0,
+				left_align: true,
+			}.trim_to(60)),
+			0x0ff000000000ff,
+		);
 	}
 }
 
